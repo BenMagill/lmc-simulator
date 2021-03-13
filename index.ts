@@ -28,6 +28,8 @@ class Machine {
     end: boolean
     onInput: Function
     onOutput: Function
+    timeout: number
+    log: Function
 
     registers = {
         alu: {
@@ -89,27 +91,30 @@ class Machine {
 
     opcodes = ["HLT", "ADD", "SUB", "STA", "LDA", "BRA", "BRZ", "BRP", "INP", "OUT", "DAT"]
     
-    constructor(options?: {onInput?: Function, onOutput?: Function}) {
+    constructor(options?: {onInput?: Function, onOutput?: Function, timeout?: number, logOutput?: Function}) {
         this.memory = ["000"]
         this.output = []
         this.end = false
         this.onInput = getUserInput
         this.onOutput = console.log
-        if (options?.onInput) {
-            this.onInput = options.onInput
-        } 
-        if (options?.onOutput) {
-            this.onOutput = options.onOutput
-        }
+        this.timeout = 500
+        this.log = ()=>{}
+        if (options?.timeout) this.timeout = options.timeout
+        if (options?.onInput) this.onInput = options.onInput
+        if (options?.onOutput) this.onOutput = options.onOutput
+        if (options?.logOutput) this.log = options.logOutput
     }
 
     loadToRAM(code: string) {
         this.end = false
 
+        this.log("Compiling code")
+
         // Convert code to an array
         var codeA = code.split("\n")
 
         // Cleaning code
+        this.log("Removing unneeded text")
         var cleaned = []
         for (var line of codeA) {
             // Remove comments
@@ -131,13 +136,14 @@ class Machine {
 
         }
 
-        // console.log(cleaned)
-
         // Find location of each label
         var labels: {[key: string]: number} = {}
+
+        this.log("Finding labels")
+
         cleaned = cleaned.map((line, lineLocation) => {
             var parts = line.split(" ")
-            console.log(parts)
+            // console.log(parts)
             var index = null
             for (let i = 0; i < parts.length; i++) {
                 const part = parts[i];
@@ -146,7 +152,7 @@ class Machine {
                     break
                 }
             }
-            console.log(index)
+            // console.log(index)
             if (index === 1) {
                 // Includes a label
                 var label = parts[0]
@@ -158,7 +164,7 @@ class Machine {
             
         })
 
-        console.log({labels, cleaned})
+        // console.log({labels, cleaned})
 
         // Now each instruction has the opcode at [0] and operand at [1] or [2] (depending on addressing mode) so just need to combine
         // Instruction is abcc
@@ -166,6 +172,7 @@ class Machine {
         // b = addressing mode (0 for direct, 1 for immediate)
         // c = location / data to use
 
+        this.log("Converting to instructions")
         var output = cleaned.map(item => {
             var instruction = item[0].toUpperCase()
             var mode = 0
@@ -186,7 +193,6 @@ class Machine {
                 }
             }
             
-            var out
             if (instruction === "DAT") {
                 return data.toString()
             } else {
@@ -194,146 +200,205 @@ class Machine {
             }
 
         })
-        console.log(output)
+        // console.log(output)
+
         this.memory = output
+
+        this.log("Loaded to memory")
     }
 
     fetch() {
+        this.log("\n------Fetching------")
+
         // Copy PC value to MAR
         this.registers.mar.set(this.registers.pc.value)
-        
+        this.log("Copying PC to MAR")
+
         // Load data in memory to MDR
         this.registers.mdr.set(this.registers.mar.getFromRAM())
+        this.log("Copy memory at MAR address to MDR")
 
         // Copy MDR to CIR
         this.registers.cir.set(this.registers.mdr.value)
+        this.log("Copy MDR to CIR")
 
         // Inrement PC
         this.registers.pc.incrememnt()
+        this.log("Incrememnt PC")
+
     }
 
     decode() {
+        this.log("\n------Decoding------")
         // Get CIR value
         var instruction = this.registers.cir.value
+        this.log("Splitting CIR into opcode, mode and operand")
 
         // split into its parts
-        this.registers.cir.decoded.opcode = Number(instruction[0])
-        this.registers.cir.decoded.mode = Number(instruction[1])
-        this.registers.cir.decoded.operand = Number(instruction.substring(2))
+        
+        var opcode = Number(instruction[0])
+        var mode = Number(instruction[1])
+        var operand = Number(instruction.substring(2))
+        this.registers.cir.decoded.opcode = opcode
+        this.registers.cir.decoded.mode = mode
+        this.registers.cir.decoded.operand = operand
+        this.log(`Opcode: ${opcode}, Mode: ${mode}, Operand: ${operand}`)
 
     }
     
     execute() {
+        this.log("\n------Executing------")
 
         // Get decoded values
         var {opcode, mode, operand} = this.registers.cir.decoded
         // console.log(this.registers.cir.decoded)
         // Decide what to do
      
+        this.log("Determing command")
         switch (opcode) {
             case 0: 
+                this.log("Halting program")
                 this.end = true
                 break
             case 1:
                 // Add data to ACC
-
+                this.log("Command: Add")
                 // Decide based on addressing mode
                 if (mode === 0) {
+                    this.log("Using direct address mode")
                     // Load value from memory using operand as address
 
                     // Set mar to address
                     this.registers.mar.set(operand)
+                    this.log(`Settings MAR to address ${operand}`)
+
                     // Get data in memory
                     this.registers.mdr.set(this.registers.mar.getFromRAM())
+                    this.log("Copying value at MAR address to MDR")
 
                 } else {
+                    this.log("Using immediate address mode")
                     // Set mdr to value to use
                     this.registers.mdr.set(operand.toString())
+                    this.log("Setting MDR to operand value")
                 }
 
+                this.log("Adding MDR to ACC")
                 this.registers.alu.add()
                 break;
             case 2:
                 // Sub data from ACC
+                this.log("Command: Subtract")
                 
                 // Decide based on addressing mode
                 if (mode === 0) {
                     // Load value from memory using operand as address
+                    this.log("Using direct address mode")
 
                     // Set mar to address
                     this.registers.mar.set(operand)
+                    this.log(`Settings MAR to address ${operand}`)
+
                     // Get data in memory
                     this.registers.mdr.set(this.registers.mar.getFromRAM())
+                    this.log("Copying value at MAR address to MDR")
 
                 } else {
+                    this.log("Using immediate address mode")
+                    
                     // Set mdr to value to use
                     this.registers.mdr.set(operand.toString())
                 }
 
+                this.log("Subtracting MDR from ACC")
                 this.registers.alu.sub()
 
                 break;
             case 3:
+                this.log("Command: Store")
                 // Store ACC in Memory at address given
+                
                 var acc = this.registers.acc.value
                 
                 // Set MDR to data to store
                 this.registers.mdr.set(acc.toString())
+                this.log("Settings MDR to data to store")
 
                 // Set MAR to operand
                 this.registers.mar.set(operand)
+                this.log(`Setting MAR to ${operand}`)
 
                 // Store
                 this.registers.mar.storeInRAM()
+                this.log("Copying MDR into Memory")
 
                 // console.log(this.memory)
                 break;   
             case 4:
+                this.log("Command: Load")
                 // Load data into acc
 
                 // Decide based on mode
                 if (mode === 0) {
+                    this.log("Using direct address mode")
                     // Load value from memory using operand as address
 
                     // Set mar to address
                     this.registers.mar.set(operand)
+                    this.log(`Setting MAR to ${operand}`)
+
                     // Get data in memory
                     this.registers.mdr.set(this.registers.mar.getFromRAM())
+                    this.log("Copying memory at MAR address to MDR")
 
                     // Copy mdr to acc
                     this.registers.acc.set(Number(this.registers.mdr.value))
+                    this.log("Copying MDR to ACC")
 
                 } else {
+                    this.log("Using immediate address mode")
                     // Set acc to value to use
                     this.registers.acc.set(operand)
+                    this.log("Copying operand to ACC")
+
                 }
 
                 break;
             case 5:
+                this.log("Command: Branch always")
                 // Set PC to operand
                 this.registers.pc.set(operand)
+                this.log("Setting PC to operand")
                 break;
             case 6: 
+                this.log("Command: Branch if 0")
                 // Set PC to operand if ACC is 0
                 if (this.registers.acc.value === 0) {
                     this.registers.pc.set(operand)
-                }
+                    this.log("Setting PC to operand")
+                } 
                 break;
             case 7: 
+                this.log("Command: Branch if positive")
                 // Set PC to operand if ACC is > 0
                 if (this.registers.acc.value > 0) {
+                    this.log("Settings PC to operand")
                     this.registers.pc.set(operand)
                 }
                 break;
             case 8: 
+                this.log("Command: Input")
                 // Get user input and store in ACC
                 // TODO add checks to if it is a number or not
                 var input = this.onInput("Input a number")
                 this.registers.acc.set(input)
+                this.log(`Settings ACC to ${input}`)
                 break;
             case 9: 
+                this.log("Command: Output")
                 // output acc
                 this.onOutput(this.registers.acc.value)
+                this.log("Outputting ACC")
                 break;
             
             default:
@@ -341,6 +406,17 @@ class Machine {
         }
         
         
+    }
+
+    async run () {
+        while (!a.end) {
+            a.fetch()
+            await new Promise(resolve => setTimeout(resolve, this.timeout));
+            a.decode()
+            await new Promise(resolve => setTimeout(resolve, this.timeout));
+            a.execute()
+            await new Promise(resolve => setTimeout(resolve, this.timeout));
+        }
     }
 }
 
@@ -358,12 +434,6 @@ count   DAT
 
 // TODO: when parsing if using immediate check if operand is a valid number
 
-var a = new Machine()
+var a = new Machine({logOutput: console.log})
 a.loadToRAM(testInp)
-while (!a.end) {
-    a.fetch()
-    a.decode()
-    a.execute()
-}
-console.log("finished")
-// a.execute()
+a.run()
