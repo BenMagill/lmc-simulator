@@ -409,31 +409,17 @@ class Machine {
     }
 
     async run () {
-        while (!a.end) {
-            a.fetch()
+        while (!this.end) {
+            this.fetch()
             await new Promise(resolve => setTimeout(resolve, this.timeout));
-            a.decode()
+            this.decode()
             await new Promise(resolve => setTimeout(resolve, this.timeout));
-            a.execute()
+            this.execute()
             await new Promise(resolve => setTimeout(resolve, this.timeout));
         }
     }
 }
 
-var testInp = `
-        INP
-loop    OUT   
-        STA count
-        SUB # 2
-	    STA count
-        BRP loop ; This is a comment
-        HLT
-one     DAT 1
-count   DAT   
-`
-
+module.exports = Machine
 // TODO: when parsing if using immediate check if operand is a valid number
 
-var a = new Machine({logOutput: console.log})
-a.loadToRAM(testInp)
-a.run()
