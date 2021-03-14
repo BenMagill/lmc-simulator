@@ -1,4 +1,3 @@
-var reader = require("readline-sync")
 /**
  * 
  * 
@@ -17,7 +16,7 @@ var reader = require("readline-sync")
 
 
 var getUserInput = (text: string) => {
-    return reader.question(`${text}: `)
+    return require("readline-sync").question(`${text}: `)
 }
 
 // getUserInput("please", console.log)
@@ -100,7 +99,9 @@ class Machine {
         this.log = ()=>{}
         if (options?.timeout) this.timeout = options.timeout
         if (options?.onInput) {this.onInput = options.onInput}
-        else {this.onInput = getUserInput}
+        else {this.onInput = (text: string) => {
+            return require("readline-sync").question(`${text}: `)
+        }}
         if (options?.onOutput) this.onOutput = options.onOutput
         if (options?.logOutput) this.log = options.logOutput
     }
