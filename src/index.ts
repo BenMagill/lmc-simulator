@@ -29,6 +29,7 @@ class Machine {
     onOutput: Function
     timeout: number
     log: Function
+    error: boolean
 
     registers = {
         alu: {
@@ -94,6 +95,7 @@ class Machine {
         this.memory = ["000"]
         this.output = []
         this.end = false
+        this.error = false
         this.onInput = options.onInput
         this.onOutput = console.log
         this.timeout = 500
@@ -105,6 +107,7 @@ class Machine {
 
     loadToRAM(code: string) {
         this.end = false
+        this.error = false
 
         this.log("Compiling code")
 
@@ -140,8 +143,11 @@ class Machine {
         this.log("Finding labels")
 
         cleaned = cleaned.map((line, lineLocation) => {
+            // Split instruction into parts
             var parts = line.split(" ")
             // console.log(parts)
+
+            // Find location of INSTRUCTION
             var index = null
             for (let i = 0; i < parts.length; i++) {
                 const part = parts[i];
@@ -156,11 +162,21 @@ class Machine {
                 var label = parts[0]
                 labels[label] = lineLocation
                 parts.splice(0, 1)
+            } else if (index === null) {
+                // No instruction on line
+                this.error = true
+                this.log("Syntax error: invalid instruction")
+            } else if (index > 1) {
+                // Instruction should be first or second item
+                this.error = true
+                this.log("Syntax error: unexpected identifier ")
             }
 
             return parts
             
         })
+
+        if (this.error) return
 
         // console.log({labels, cleaned})
 
@@ -184,8 +200,12 @@ class Machine {
 
             // Determine if data references a label or not
             if (isNaN(Number(data))) {
+                // Does the label exist
                 if (labels[data] !== undefined) {
                     data = labels[data]
+                } else if (data !== undefined) {
+                    this.error = true
+                    this.log(`Syntax error: label "${data}" does not exist`)
                 } else {
                     data = 0
                 }
@@ -200,9 +220,11 @@ class Machine {
         })
         // console.log(output)
 
-        this.memory = output
-
-        this.log("Loaded to memory")
+        if (this.error === false) {
+            this.memory = output
+    
+            this.log("Loaded to memory")
+        }
     }
 
     fetch() {
