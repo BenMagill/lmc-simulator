@@ -1,6 +1,6 @@
 {
   "name": "lmc-simulator",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A libaray that allows the simulation of LMC code",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -18,10 +18,15 @@
     "@types/node": "^14.14.34",
     "typescript": "^4.2.3"
   },
-  "files": ["lib/**/*"],
+  "files": [
+    "lib/**/*"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/BenMagill/lmc-simulator"
   },
-  "keywords": ["LMC", "Simulator"]
+  "keywords": [
+    "LMC",
+    "Simulator"
+  ]
 }
