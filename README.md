@@ -26,7 +26,7 @@ count   DAT
 
 var lmc = new Machine()
 
-lmc.loadToRAM()
+lmc.loadToRAM(code)
 
 lmc.run()
 ```
