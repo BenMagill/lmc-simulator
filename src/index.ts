@@ -95,12 +95,12 @@ class Machine {
         this.memory = ["000"]
         this.output = []
         this.end = false
-        this.onInput = getUserInput
         this.onOutput = console.log
         this.timeout = 500
         this.log = ()=>{}
         if (options?.timeout) this.timeout = options.timeout
-        if (options?.onInput) this.onInput = options.onInput
+        if (options?.onInput) {this.onInput = options.onInput}
+        else {this.onInput = getUserInput}
         if (options?.onOutput) this.onOutput = options.onOutput
         if (options?.logOutput) this.log = options.logOutput
     }
