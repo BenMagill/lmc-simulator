@@ -90,16 +90,15 @@ class Machine {
 
     opcodes = ["HLT", "ADD", "SUB", "STA", "LDA", "BRA", "BRZ", "BRP", "INP", "OUT", "DAT"]
     
-    constructor(options?: {onInput: Function, onOutput?: Function, timeout?: number, logOutput?: Function}) {
+    constructor(options: {onInput: Function, onOutput?: Function, timeout?: number, logOutput?: Function}) {
         this.memory = ["000"]
         this.output = []
         this.end = false
-        this.onInput = prompt
+        this.onInput = options.onInput
         this.onOutput = console.log
         this.timeout = 500
         this.log = ()=>{}
         if (options?.timeout) this.timeout = options.timeout
-        if (options?.onInput) this.onInput = options.onInput
         if (options?.onOutput) this.onOutput = options.onOutput
         if (options?.logOutput) this.log = options.logOutput
     }
