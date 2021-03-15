@@ -1,7 +1,3 @@
-/**
- * 
- * 
- */
 
 // var opcodes = ["HLT", "ADD", "SUB", "STA", "LDA", "BRA", "BRZ", "BRP", "INP", "OUT", "DAT"]
 
@@ -99,7 +95,10 @@ class Machine {
     }
 
     opcodes = ["HLT", "ADD", "SUB", "STA", "LDA", "BRA", "BRZ", "BRP", "INP", "OUT", "DAT"]
-    
+    /**
+     * 
+     * @param options 
+     */
     constructor(options: {onInput: Function, onOutput?: Function, timeout?: number, logOutput?: Function, onMemoryChange?: Function, onRegisterChange?: Function}) {
         this.memory = ["000"]
         this.output = []
@@ -459,6 +458,6 @@ class Machine {
     }
 }
 
-module.exports = Machine
+export = Machine
 // TODO: when parsing if using immediate check if operand is a valid number
 
