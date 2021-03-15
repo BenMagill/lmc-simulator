@@ -121,6 +121,7 @@ class Machine {
     loadToRAM(code: string) {
         this.end = false
         this.error = false
+        this.registers.pc.set(0)
 
         this.log("Compiling code")
 
@@ -443,13 +444,17 @@ class Machine {
     }
 
     async run () {
-        while (!this.end) {
-            this.fetch()
-            await new Promise(resolve => setTimeout(resolve, this.timeout));
-            this.decode()
-            await new Promise(resolve => setTimeout(resolve, this.timeout));
-            this.execute()
-            await new Promise(resolve => setTimeout(resolve, this.timeout));
+        this.registers.pc.set(0)
+        this.end = false
+        if (this.error === false) {
+            while (!this.end) {
+                this.fetch()
+                await new Promise(resolve => setTimeout(resolve, this.timeout));
+                this.decode()
+                await new Promise(resolve => setTimeout(resolve, this.timeout));
+                this.execute()
+                await new Promise(resolve => setTimeout(resolve, this.timeout));
+            }
         }
     }
 }
