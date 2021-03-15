@@ -29,6 +29,8 @@ class Machine {
     onOutput: Function
     timeout: number
     log: Function
+    onRegisterChange: Function
+    onMemoryChange: Function
     error: boolean
 
     registers = {
@@ -43,15 +45,18 @@ class Machine {
         acc: {
             value: 0,
             set: (inp: number) => {
+                this.onRegisterChange({register: "acc", value: inp})
                 this.registers.acc.value = inp
             }
         },
         pc: {
             value: 0,
             set: (inp: number) => {
+                this.onRegisterChange({register: "pc", value: inp})
                 this.registers.pc.value = inp
             },
             incrememnt: () => {
+                this.onRegisterChange({register: "pc", value: this.registers.pc.value+1})
                 this.registers.pc.value = this.registers.pc.value+1
             }
         },
@@ -63,22 +68,26 @@ class Machine {
                 return this.memory[this.registers.mar.value]
             },  
             storeInRAM: () => {
+                this.onMemoryChange()
                 // store the value of the mdr in the memory at values location
                 this.memory[this.registers.mar.value] = this.registers.mdr.value
             },
             set: (inp: number) => {
+                this.onRegisterChange({register: "mar", value: inp})
                 this.registers.mar.value = inp
             }
         },
         mdr: {
             value: "",
             set: (inp: string) => {
+                this.onRegisterChange({register: "mdr", value: inp})
                 this.registers.mdr.value = inp
             }
         }, 
         cir: {
             value: "",
             set: (inp: string) => {
+                this.onRegisterChange({register: "cir", value: inp})
                 this.registers.cir.value = inp
             },
             decoded: {
@@ -91,7 +100,7 @@ class Machine {
 
     opcodes = ["HLT", "ADD", "SUB", "STA", "LDA", "BRA", "BRZ", "BRP", "INP", "OUT", "DAT"]
     
-    constructor(options: {onInput: Function, onOutput?: Function, timeout?: number, logOutput?: Function}) {
+    constructor(options: {onInput: Function, onOutput?: Function, timeout?: number, logOutput?: Function, onMemoryChange?: Function, onRegisterChange?: Function}) {
         this.memory = ["000"]
         this.output = []
         this.end = false
@@ -100,9 +109,13 @@ class Machine {
         this.onOutput = console.log
         this.timeout = 500
         this.log = ()=>{}
+        this.onRegisterChange = () => {}
+        this.onMemoryChange = () => {}
         if (options?.timeout) this.timeout = options.timeout
         if (options?.onOutput) this.onOutput = options.onOutput
         if (options?.logOutput) this.log = options.logOutput
+        if (options?.onRegisterChange) this.onRegisterChange = options.onRegisterChange
+        if (options?.onMemoryChange) this.onMemoryChange = options.onMemoryChange
     }
 
     loadToRAM(code: string) {
@@ -220,8 +233,9 @@ class Machine {
         })
         // console.log(output)
 
-        if (this.error === false) {
+        if (this.error === false) {            
             this.memory = output
+            this.onMemoryChange()
     
             this.log("Loaded to memory")
         }
