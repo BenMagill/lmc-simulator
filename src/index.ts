@@ -111,24 +111,24 @@ class Machine {
         // Cleaning code
         this.log("Removing unneeded text")
         var cleaned = []
-        for (var line of codeA) {
+        for (let i = 0; i < codeA.length; i++) {
+            var line = codeA[i];
             // Remove comments
             line = line.split(";")[0]
-
+    
             // Replace /t with single space
             // line = line.replace(/\t+/g, " ")
-
+    
             // Replace each block of spaces with a single one
             line = line.replace(/\s\s+/g, " ")
-
+    
             // Remove spaces from start of line
             line = line.trim()
-
+    
             // If line not blank add to cleaned code
             if (line !== "") {
-                cleaned.push(line)
+                cleaned.push({line: i+1, code: line})
             }
-
         }
 
         // Find location of each label
@@ -138,7 +138,7 @@ class Machine {
 
         cleaned = cleaned.map((line, lineLocation) => {
             // Split instruction into parts
-            var parts = line.split(" ")
+            var parts = line.code.split(" ")
             // console.log(parts)
 
             // Find location of INSTRUCTION
@@ -159,11 +159,11 @@ class Machine {
             } else if (index === null) {
                 // No instruction on line
                 this.error = true
-                this.log("Syntax error: invalid instruction")
+                this.log("Syntax error: invalid instruction at line " + line.line)
             } else if (index > 1) {
                 // Instruction should be first or second item
                 this.error = true
-                this.log("Syntax error: unexpected identifier ")
+                this.log("Syntax error: unexpected identifier at line " + line.line)
             }
 
             return parts
