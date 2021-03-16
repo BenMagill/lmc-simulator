@@ -1,22 +1,3 @@
-
-// var opcodes = ["HLT", "ADD", "SUB", "STA", "LDA", "BRA", "BRZ", "BRP", "INP", "OUT", "DAT"]
-
-
-
-// const simulate = (code: string) => {
-//     var memory = parse(code)
-//     console.log(memory)
-// }
-
-// simulate(testInp)
-
-
-// var getUserInput = (text: string) => {
-//     return require("readline-sync").question(`${text}: `)
-// }
-
-// getUserInput("please", console.log)
-
 class Machine {
     memory: string[]
     output: string[]
@@ -424,8 +405,14 @@ class Machine {
                 this.log("Command: Input")
                 // Get user input and store in ACC
                 // TODO add checks to if it is a number or not
-                var input = this.onInput("Input a number")
-                this.registers.acc.set(input)
+                var validInput = false
+                var input = ""
+                while (validInput === false) {
+                    input = this.onInput("Input a number")
+                    if (!isNaN(Number(input))) validInput = true
+                }
+
+                this.registers.acc.set(Number(input))
                 this.log(`Settings ACC to ${input}`)
                 break;
             case 9: 
